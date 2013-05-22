@@ -99,7 +99,7 @@ def processMovie(inputDirectory, inputHash):
         protocol = "https://"
     else:
         protocol = "http://"
-    url = protocol + config.get("Couchpotato", "host") + ":" + config.get("Couchpotato", "port") + "/" + baseURL + "api/" + config.get("Couchpotato", "apikey") + "/renamer.scan/?movie_folder=" + inputDirectory + "&downloader=utorrent&download_id=" + inputHash
+    url = protocol + config.get("Couchpotato", "host") + ":" + config.get("Couchpotato", "port") + "/" + baseURL + "api/" + config.get("Couchpotato", "apikey") + "/renamer.scan/?async=1&movie_folder=" + inputDirectory
     myOpener = AuthURLOpener(config.get("Couchpotato", "username"), config.get("Couchpotato", "password"))
 
     try:

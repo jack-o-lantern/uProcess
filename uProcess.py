@@ -88,7 +88,7 @@ def processFile(fileAction, inputFile, outputFile):
         logger.error(loggerHeader + "File already exists: %s", outputFile)
     return
 
-def processMovie(inputDirectory, inputHash):
+def processMovie(inputDirectory):
     try:
         baseURL = config.get("Couchpotato", "baseURL")
         logger.debug(loggerHeader + "processMovie :: URL base: %s", baseURL)
@@ -200,7 +200,7 @@ def main(inputDirectory, inputName, inputHash, inputLabel):
     if inputLabel == config.get("Couchpotato", "label") and config.getboolean("Couchpotato", "active"):
         try:
             logger.info(loggerHeader + "Calling Couchpotato to process directory: %s", outputDestination)
-            processMovie(outputDestination, inputHash)
+            processMovie(outputDestination)
         except Exception, e:
             logger.error(loggerHeader + "Couchpotato post process failed for directory: %s %s %s", (outputDestination, e, traceback.format_exc()))
 

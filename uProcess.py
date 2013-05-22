@@ -15,7 +15,7 @@
 #    
 #    Creator of uProcess: jkaberg, https://github.com/jkaberg
 
-import os, sys, shutil, logging, subprocess, urllib, win32file, traceback, ConfigParser
+import os, sys, shutil, time, logging, subprocess, urllib, win32file, traceback, ConfigParser
 
 from utorrent.client import UTorrentClient
 import pyUnRAR2
@@ -215,6 +215,7 @@ def main(inputDirectory, inputName, inputHash, inputLabel):
     # Resume seeding in uTorrent if needed
     if uTorrent and fileAction == "move" or fileAction == "link":
         logger.debug(loggerHeader + "Start seeding torrent with hash: %s", inputHash)
+        time.sleep(10) # CPS can be abit slow sometimes ;)
         uTorrent.start(inputHash)
 
     logger.info(loggerHeader + "Success, all done!\n")

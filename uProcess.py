@@ -163,7 +163,7 @@ def main(inputDirectory, inputName, inputHash, inputLabel):
     try: # Create an connection to the uTorrent Web UI
         uTorrent = UTorrentClient(uTorrentHost, config.get("uTorrent", "user"), config.get("uTorrent", "password"))
     except Exception, e:
-        logger.error(loggerHeader + "Failed to connect to uTorrent: %s", (uTorrentHost, (e, traceback.format_exc()))
+        logger.error(loggerHeader + "Failed to connect to uTorrent: %s", uTorrentHost, (e, traceback.format_exc()))
 
     if uTorrent: # We poll uTorrent for a list of files matching the hash, and process them
         if fileAction == "move" or fileAction == "link":

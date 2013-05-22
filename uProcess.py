@@ -46,14 +46,14 @@ def createLink(src, dst):
         else:
             os.link(src, dst)
     except Exception, e:
-        logger.error(loggerHeader + "Linking failed: %s %s", (e, traceback.format_exc()))
+        logger.error(loggerHeader + "Linking failed: %s", (e, traceback.format_exc()))
 
 def createDestination(outputDestination):
     if not os.path.exists(outputDestination):
         try:
             os.makedirs(outputDestination)
         except Exception, e:
-            logger.error(loggerHeader + "Failed to create destination directory: %s %s %s", (outputDestination, e, traceback.format_exc()))
+            logger.error(loggerHeader + "Failed to create destination directory: %s %s", outputDestination, (e, traceback.format_exc()))
     return
 
 def extractFile(compressedFile, outputDestination):
@@ -61,7 +61,7 @@ def extractFile(compressedFile, outputDestination):
         logger.info(loggerHeader + "Extracting %s to %s", compressedFile, outputDestination)
         pyUnRAR2.RarFile(compressedFile).extract(path = outputDestination, withSubpath = False, overwrite = False)
     except Exception, e:
-        logger.error("Failed to extract %s: %s %s", (compressedFile, e, traceback.format_exc()))
+        logger.error("Failed to extract %s: %s", compressedFile, (e, traceback.format_exc()))
         return
 
 def processFile(fileAction, inputFile, outputFile):
@@ -71,19 +71,19 @@ def processFile(fileAction, inputFile, outputFile):
                 logger.info(loggerHeader + "Moving file %s to %s", inputFile, outputFile)
                 shutil.move(inputFile, outputFile)
             except Exception, e:
-                logger.error(loggerHeader + "Failed to move file: %s to %s: %s %s", (inputFile, outputFile, e, traceback.format_exc()))
+                logger.error(loggerHeader + "Failed to move file: %s to %s: %s", inputFile, outputFile, (e, traceback.format_exc()))
         elif fileAction == "link":
             try:
                 logger.info(loggerHeader + "Linking file %s to %s", inputFile, outputFile)
                 createLink(inputFile, outputFile)
             except Exception, e:
-                logger.info(loggerHeader + "Failed to link file: %s to %s: %s %s", (inputFile, outputFile, e, traceback.format_exc()))
+                logger.info(loggerHeader + "Failed to link file: %s to %s: %s", inputFile, outputFile, (e, traceback.format_exc()))
         else:
             try:
                 logger.info(loggerHeader + "Copying file %s to %s", inputFile, outputFile)
                 shutil.copy(inputFile, outputFile)
             except Exception, e:
-                logger.error(loggerHeader + "Failed to copy file: %s to %s: %s %s", (inputFile, outputFile, e, traceback.format_exc()))
+                logger.error(loggerHeader + "Failed to copy file: %s to %s: %s", inputFile, outputFile, (e, traceback.format_exc()))
     else:
         logger.error(loggerHeader + "File already exists: %s", outputFile)
     return
@@ -106,7 +106,7 @@ def processMovie(inputDirectory):
         urlObj = myOpener.openit(url)
         logger.debug(loggerHeader + "processMovie :: Opening URL: %s", url)
     except IOError, e:
-        logger.error(loggerHeader + "processMovie :: Unable to open URL: %s %s %s", (url, e, traceback.format_exc()))
+        logger.error(loggerHeader + "processMovie :: Unable to open URL: %s %s", url, (e, traceback.format_exc()))
         raise
 
     result = urlObj.readlines()
@@ -116,7 +116,7 @@ def processMovie(inputDirectory):
 def processEpisode(inputDirectory):
     try:
         baseURL = config.get("Sickbeard", "baseURL")
-        logger.debug(loggerHeader + "processEpisode :: URL base: %s %s %s", (baseURL, e, traceback.format_exc()))
+        logger.debug(loggerHeader + "processEpisode :: URL base: %s %s", baseURL, (e, traceback.format_exc()))
     except ConfigParser.NoOptionError:
         baseURL = ''
 
@@ -131,7 +131,7 @@ def processEpisode(inputDirectory):
         urlObj = myOpener.openit(url)
         logger.debug(loggerHeader + "processEpisode :: Opening URL: %s", url)
     except Exception, e:
-        logger.error(loggerHeader + "processEpisode :: Unable to open URL: %s %s %s", (url, e, traceback.format_exc()))
+        logger.error(loggerHeader + "processEpisode :: Unable to open URL: %s %s", url, (e, traceback.format_exc()))
         raise
 
     result = urlObj.readlines()
@@ -163,7 +163,7 @@ def main(inputDirectory, inputName, inputHash, inputLabel):
     try: # Create an connection to the uTorrent Web UI
         uTorrent = UTorrentClient(uTorrentHost, config.get("uTorrent", "user"), config.get("uTorrent", "password"))
     except Exception, e:
-        logger.error(loggerHeader + "Failed to connect to uTorrent: %s", (uTorrentHost, e, traceback.format_exc()))
+        logger.error(loggerHeader + "Failed to connect to uTorrent: %s", (uTorrentHost, (e, traceback.format_exc()))
 
     if uTorrent: # We poll uTorrent for a list of files matching the hash, and process them
         if fileAction == "move" or fileAction == "link":
@@ -202,7 +202,7 @@ def main(inputDirectory, inputName, inputHash, inputLabel):
             logger.info(loggerHeader + "Calling Couchpotato to process directory: %s", outputDestination)
             processMovie(outputDestination)
         except Exception, e:
-            logger.error(loggerHeader + "Couchpotato post process failed for directory: %s %s %s", (outputDestination, e, traceback.format_exc()))
+            logger.error(loggerHeader + "Couchpotato post process failed for directory: %s %s", outputDestination, (e, traceback.format_exc()))
 
     # Optionally process the outputDestination by calling Sickbeard
     elif inputLabel == config.get("Sickbeard", "label") and config.getboolean("Sickbeard", "active"):
@@ -210,7 +210,7 @@ def main(inputDirectory, inputName, inputHash, inputLabel):
             logger.info(loggerHeader + "Calling Sickbeard to process directory: %s", outputDestination)
             processEpisode(outputDestination)
         except Exception, e:
-            logger.error(loggerHeader + "Sickbeard post process failed for directory: %s %s %s", (outputDestination, e, traceback.format_exc()))
+            logger.error(loggerHeader + "Sickbeard post process failed for directory: %s %s", outputDestination, (e, traceback.format_exc()))
 
     # Resume seeding in uTorrent if needed
     if uTorrent and fileAction == "move" or fileAction == "link":

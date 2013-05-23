@@ -39,5 +39,5 @@ Usage:
 
 Not working!?
 ---------
-- First off, check the log file located in the uProcess directory
+- First off, check the log file located in the uProcess directory (make sure you set debug = true in config.cfg, and then run uProcess again)
 - If that didn't help, create an ticket over at the [issue tracker](https://github.com/jkaberg/uProcess/issues "issue tracker")

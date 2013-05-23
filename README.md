@@ -12,7 +12,7 @@ Features:
 - Extract downloaded content - [List of supported archives](http://www.rarlab.com/otherfmt.htm "List of supported archives")
 - Move, copy or (hard)link files that doesn't need extraction
 - Multi OS compatible (Windows, Linux, OSX)
-- Optionally calls Couchpotato or Sickbbeard when done (for additional post-processing)
+- Optionally calls CouchPotato or Sickbbeard when done (for additional post-processing)
 
 Requirements:
 ---------
@@ -20,6 +20,12 @@ Requirements:
  "uTorrent 2.2.1 Build 25302")+ (confirmed), might work on earlier versions
 - uTorrent Web UI activated
 - [Python 2.7](http://www.python.org/download/releases/2.7/ "Python 2.7")
+
+Good to know:
+---------
+- For uProcess to be able to send torrents containing movies to CouchPotato or series to Sickbeard you need to match the torrent label you set in CouchPotato/Sickbeard with the one's you set in config.cfg (eg. in Couchpotato you set label to "movie" in the uTorrent downloader, then in the config.cfg under [Couchpotato] where it says label =, make it so: label = movie)
+- Links doesn't work cross partition/hard drive, use the copy or move option instead
+- uProcess ONLY works with uTorrent as its heavily dependant on uTorrents Web UI API
 
 Usage:
 ---------
@@ -33,4 +39,5 @@ Usage:
 
 Not working!?
 ---------
-- Create an ticket over at the [issue tracker](https://github.com/jkaberg/uProcess/issues "issue tracker")
+- First off, check the log file located in the uProcess directory
+- If that didn't help, create an ticket over at the [issue tracker](https://github.com/jkaberg/uProcess/issues "issue tracker")

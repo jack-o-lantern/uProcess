@@ -59,7 +59,7 @@ def createDestination(outputDestination):
 def extractFile(compressedFile, outputDestination):
     logger.info(loggerHeader + "Extracting %s to %s", compressedFile, outputDestination)
     try:
-        pyUnRAR2.RarFile(compressedFile).extract(path = outputDestination, withSubpath = False, overwrite = False)
+        pyUnRAR2.RarFile(compressedFile).extract(path = outputDestination, withSubpath = False, overwrite = True)
     except Exception, e:
         logger.error("Failed to extract %s: %s %s", (compressedFile, e, traceback.format_exc()))
         return
@@ -78,77 +78,65 @@ def processFile(fileAction, inputFile, outputFile):
                 createLink(inputFile, outputFile)
             except Exception, e:
                 logger.info(loggerHeader + "Failed to link file: %s to %s: %s %s", (inputFile, outputFile, e, traceback.format_exc()))
-        else:
+        elif fileAction == "copy":
             try:
                 logger.info(loggerHeader + "Copying file %s to %s", inputFile, outputFile)
                 shutil.copy(inputFile, outputFile)
             except Exception, e:
                 logger.error(loggerHeader + "Failed to copy file: %s to %s: %s %s", (inputFile, outputFile, e, traceback.format_exc()))
+        else:
+            return
     else:
         logger.error(loggerHeader + "File already exists: %s", outputFile)
     return
 
-def processMovie(outputDestination):
-    try:
-        baseURL = config.get("Couchpotato", "baseURL")
-        logger.debug(loggerHeader + "processMovie :: URL base: %s", baseURL)
-    except ConfigParser.NoOptionError:
-        baseURL = ''
+def processMedia(mediaProcessor, outputDestination):
+    if mediaProcessor == "couchpotato":
+        try:
+            baseURL = config.get("Couchpotato", "baseURL")
+            logger.debug(loggerHeader + "processMedia :: URL base: %s", baseURL)
+        except ConfigParser.NoOptionError:
+            baseURL = ''
 
-    if config.getboolean("Couchpotato", "ssl"):
-        protocol = "https://"
+        if config.getboolean("Couchpotato", "ssl"):
+            protocol = "https://"
+        else:
+            protocol = "http://"
+        url = protocol + config.get("Couchpotato", "host") + ":" + config.get("Couchpotato", "port") + "/" + baseURL + "api/" + config.get("Couchpotato", "apikey") + "/renamer.scan/?async=1&movie_folder=" + outputDestination
+        myOpener = AuthURLOpener(config.get("Couchpotato", "username"), config.get("Couchpotato", "password"))
+
+    elif mediaProcessor == "sickbeard":
+        try:
+            baseURL = config.get("Sickbeard", "baseURL")
+            logger.debug(loggerHeader + "processMedia :: URL base: %s %s %s", (baseURL, e, traceback.format_exc()))
+        except ConfigParser.NoOptionError:
+            baseURL = ''
+
+        if config.getboolean("Sickbeard", "ssl"):
+            protocol = "https://"
+        else:
+            protocol = "http://"
+        url = protocol + config.get("Sickbeard", "host") + ":" + config.get("Sickbeard", "port") + "/" + baseURL + "home/postprocess/processEpisode?quiet=1&dir=" + outputDestination
+        myOpener = AuthURLOpener(config.get("Sickbeard", "username"), config.get("Sickbeard", "password"))
     else:
-        protocol = "http://"
-    url = protocol + config.get("Couchpotato", "host") + ":" + config.get("Couchpotato", "port") + "/" + baseURL + "api/" + config.get("Couchpotato", "apikey") + "/renamer.scan/?async=1&movie_folder=" + outputDestination
-    myOpener = AuthURLOpener(config.get("Couchpotato", "username"), config.get("Couchpotato", "password"))
+        return
 
     try:
         urlObj = myOpener.openit(url)
-        logger.debug(loggerHeader + "processMovie :: Opening URL: %s", url)
-    except IOError, e:
-        logger.error(loggerHeader + "processMovie :: Unable to open URL: %s %s %s", (url, e, traceback.format_exc()))
-        raise
-
-    result = urlObj.readlines()
-    for line in result:
-        logger.info(loggerHeader + "processMovie :: " + line)
-
-    # This is a ugly solution, we need a better one!!
-    timeout = time.time() + 60*2 # 2 min timeout
-    while os.path.exists(outputDestination):
-        if time.time() > timeout or not os.path.exists(outputDestination):
-            break
-        time.sleep(2)
-
-def processEpisode(outputDestination):
-    try:
-        baseURL = config.get("Sickbeard", "baseURL")
-        logger.debug(loggerHeader + "processEpisode :: URL base: %s %s %s", (baseURL, e, traceback.format_exc()))
-    except ConfigParser.NoOptionError:
-        baseURL = ''
-
-    if config.getboolean("Sickbeard", "ssl"):
-        protocol = "https://"
-    else:
-        protocol = "http://"
-    url = protocol + config.get("Sickbeard", "host") + ":" + config.get("Sickbeard", "port") + "/" + baseURL + "home/postprocess/processEpisode?quiet=1&dir=" + outputDestination
-    myOpener = AuthURLOpener(config.get("Sickbeard", "username"), config.get("Sickbeard", "password"))
-
-    try:
-        urlObj = myOpener.openit(url)
-        logger.debug(loggerHeader + "processEpisode :: Opening URL: %s", url)
+        logger.debug(loggerHeader + "processMedia :: Opening URL: %s", url)
     except Exception, e:
-        logger.error(loggerHeader + "processEpisode :: Unable to open URL: %s %s %s", (url, e, traceback.format_exc()))
+        logger.error(loggerHeader + "processMedia :: Unable to open URL: %s %s %s", (url, e, traceback.format_exc()))
         raise
 
     result = urlObj.readlines()
     for line in result:
-        logger.debug(loggerHeader + "processEpisode :: " + line)
+        logger.debug(loggerHeader + "processMedia :: " + line)
 
     # This is a ugly solution, we need a better one!!
     timeout = time.time() + 60*2 # 2 min timeout
     while os.path.exists(outputDestination):
-        if time.time() > timeout or not os.path.exists(outputDestination):
+        if time.time() > timeout:
+            logger.debug(loggerHeader + "processMedia :: The destination directory hasn't been deleted after 2 minutes, something is wrong")
             break
         time.sleep(2)
 
@@ -214,7 +202,7 @@ def main(inputDirectory, inputName, inputHash, inputLabel):
     if inputLabel == config.get("Couchpotato", "label") and config.getboolean("Couchpotato", "active"):
         try:
             logger.info(loggerHeader + "Calling Couchpotato to process directory: %s", outputDestination)
-            processMovie(outputDestination)
+            processMedia("couchpotato", outputDestination)
         except Exception, e:
             logger.error(loggerHeader + "Couchpotato post process failed for directory: %s %s", outputDestination, (e, traceback.format_exc()))
 
@@ -222,7 +210,7 @@ def main(inputDirectory, inputName, inputHash, inputLabel):
     elif inputLabel == config.get("Sickbeard", "label") and config.getboolean("Sickbeard", "active"):
         try:
             logger.info(loggerHeader + "Calling Sickbeard to process directory: %s", outputDestination)
-            processEpisode(outputDestination)
+            processMedia("sickbeard", outputDestination)
         except Exception, e:
             logger.error(loggerHeader + "Sickbeard post process failed for directory: %s %s", outputDestination, (e, traceback.format_exc()))
 

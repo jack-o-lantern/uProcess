@@ -114,10 +114,11 @@ def processMovie(outputDestination):
         logger.info(loggerHeader + "processMovie :: " + line)
 
     # This is a ugly solution, we need a better one!!
+    timeout = time.time() + 60*2 # 2 min timeout
     while os.path.exists(outputDestination):
-        if not os.path.exists(outputDestination):
+        if time.time() > timeout or not os.path.exists(outputDestination):
             break
-        time.sleep(10)
+        time.sleep(2)
 
 def processEpisode(outputDestination):
     try:
@@ -145,10 +146,11 @@ def processEpisode(outputDestination):
         logger.debug(loggerHeader + "processEpisode :: " + line)
 
     # This is a ugly solution, we need a better one!!
+    timeout = time.time() + 60*2 # 2 min timeout
     while os.path.exists(outputDestination):
-        if not os.path.exists(outputDestination):
+        if time.time() > timeout or not os.path.exists(outputDestination):
             break
-        time.sleep(10)
+        time.sleep(2)
 
 def main(inputDirectory, inputName, inputHash, inputLabel):
     logger.debug(loggerHeader + "Torrent Dir: %s", inputDirectory)

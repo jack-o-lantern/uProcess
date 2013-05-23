@@ -227,7 +227,6 @@ def main(inputDirectory, inputName, inputHash, inputLabel):
     # Resume seeding in uTorrent if needed
     if uTorrent and fileAction == "move" or fileAction == "link":
         logger.debug(loggerHeader + "Start seeding torrent with hash: %s", inputHash)
-        time.sleep(10) # CPS can be abit slow sometimes ;)
         uTorrent.start(inputHash)
 
     logger.info(loggerHeader + "Success, all done!\n")

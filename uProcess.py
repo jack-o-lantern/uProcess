@@ -150,13 +150,15 @@ def main(inputDirectory, inputName, inputHash, inputLabel):
         inputLabel = ''
 
     # Extensions to use when searching directory s for files to process
-    mediaExt = ('.mkv', '.avi', '.divx', '.xvid', '.mov', '.wmv', '.mp4', '.mpg', '.mpeg', '.vob', '.iso', '.nfo', '.sub', '.srt', '.jpg', '.jpeg', '.gif')
+    mediaExt = ('.mkv', '.avi', '.divx', '.xvid', '.m4v', '.mov', '.wmv', '.mp4', '.mpg', '.mpeg', '.vob', '.iso', '.nfo', '.sub', '.srt')
     # http://www.rarlab.com/otherfmt.htm
     archiveExt = ('.zip', 'part01.rar', '.rar', '.1', '.01', '.001', '.cab', '.arj', '.lzh', '.tar', '.tar.gz', '.gz', '.tar.bz2', '.bz2', '.ace', '.uue', '.jar', '.iso', '.7z', '.7')
     # An list of words that we don't want file names/directory's to contain
-    ignoreWords = ['sample', 'subs', 'proof']
+    ignoreWords = ['sample', 'subs', 'proof', 'screens']
     # Move, copy or link
     fileAction = config.get("uProcess", "fileAction")
+    # Delete processed files from uTorrent
+    deleteFinished = config.getboolean("uProcess", "deleteFinished")
     # Destination for extracted, copied, moved or linked files
     outputDestination = os.path.join(config.get("uProcess", "outputDirectory"), inputLabel, inputName)
     # Define the uTorrent host
@@ -215,9 +217,14 @@ def main(inputDirectory, inputName, inputHash, inputLabel):
             logger.error(loggerHeader + "Sickbeard post process failed for directory: %s %s", outputDestination, (e, traceback.format_exc()))
 
     # Resume seeding in uTorrent if needed
-    if uTorrent and fileAction == "move" or fileAction == "link":
-        logger.debug(loggerHeader + "Start seeding torrent with hash: %s", inputHash)
-        uTorrent.start(inputHash)
+    if uTorrent:
+        if deleteFinished or fileAction == "move":
+            logger.debug(loggerHeader + "Removing torrent with hash: %s", inputHash)
+            uTorrent.removedata(inputHash)
+        elif fileAction == "link":
+            logger.debug(loggerHeader + "Start seeding torrent with hash: %s", inputHash)
+            uTorrent.start(inputHash)
+
 
     logger.info(loggerHeader + "Success, all done!\n")
 

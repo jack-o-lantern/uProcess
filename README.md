@@ -20,6 +20,7 @@ Requirements:
  "uTorrent 2.2.1 Build 25302")+ (confirmed), might work on earlier versions
 - uTorrent Web UI activated
 - [Python 2.7](http://www.python.org/download/releases/2.7/ "Python 2.7")
+- [Pywin32](http://sourceforge.net/projects/pywin32/files/pywin32/Build%20217/ "Pywin32") (make sure you match this with the same arch you choose when install Python)
 
 Good to know:
 ---------

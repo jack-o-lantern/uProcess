@@ -15,7 +15,14 @@
 #    
 #    Creator of uProcess: jkaberg, https://github.com/jkaberg
 
-import os, sys, shutil, time, logging, subprocess, urllib, win32file, traceback, ConfigParser
+import os
+import sys
+import shutil
+import time
+import logging
+import urllib
+import traceback
+import ConfigParser
 
 from utorrent.client import UTorrentClient
 import pyUnRAR2
@@ -42,7 +49,8 @@ class AuthURLOpener(urllib.FancyURLopener):
 def createLink(src, dst):
     try:
         if os.name == 'nt':
-            win32file.CreateHardLink(dst, src)
+            import ctypes
+            ctypes.windll.kernel32.CreateHardLinkW(dst, src, 0)
         else:
             os.link(src, dst)
     except Exception, e:

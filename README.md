@@ -1,7 +1,7 @@
 uProcess
 ========
 
-a tiny python post processer for uTorrent
+a tiny python post processor for uTorrent
 
 About:
 ---------
@@ -11,8 +11,9 @@ Features:
 ---------
 - Extract downloaded content - [List of supported archives](http://www.rarlab.com/otherfmt.htm "List of supported archives")
 - Move, copy or (hard)link files that doesn't need extraction
+- Delete a torrents which achieved certain ratio automatic
 - Multi OS compatible (Windows, Linux, OSX)
-- Optionally calls CouchPotato or Sickbbeard when done (for additional post-processing)
+- Optionally calls CouchPotato or Sick-Beard when done (for additional post-processing)
 
 Requirements:
 ---------
@@ -34,7 +35,7 @@ Usage:
 - Extract uProcess to any location, in this example C:\Downloaders\uProcess
 - Setup uTorrent to use Web UI (Options->Preferences->Advanced->Web UI), note down user/password and listening port
 - Edit the config.cfg file in C:\Downloaders\uProcess to your preferences
-- Goto uTorrent again, in Options->Preferences->Advanced->Run Program, where it says "run this program when torrent finishes" add: C:\Python27\pythonw.exe C:\Downloaders\uProcess\uProcess.py "%D" "%N" "%I" "%L"
+- Goto uTorrent again, in Options->Preferences->Advanced->Run Program, where it says "run this program when torrent finishes" add: C:\Python27\pythonw.exe C:\Downloaders\uProcess\uProcess.py "%D" "%I"
 - DONE! ;)
 
 Not working!?

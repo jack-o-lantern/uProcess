@@ -11,7 +11,7 @@ Features:
 ---------
 - Extract downloaded content - [List of supported archives](http://www.rarlab.com/otherfmt.htm "List of supported archives")
 - Move, copy or (hard)link files that doesn't need extraction
-- Delete a torrents which achieved certain ratio automatic
+- Delete torrents which achieved certain ratio automatic 
 - Multi OS compatible (Windows, Linux, OSX)
 - Optionally calls CouchPotato or Sick-Beard when done (for additional post-processing)
 
@@ -27,6 +27,7 @@ Good to know:
 - For uProcess to be able to send torrents containing movies to CouchPotato or series to Sickbeard you need to match the torrent label you set in CouchPotato/Sickbeard with the one's you set in config.cfg (eg. in Couchpotato you set label to "movie" in the uTorrent downloader, then in the config.cfg under [Couchpotato] where it says label =, make it so: label = movie)
 - Links doesn't work cross partition/hard drive, use the copy or move option instead
 - uProcess ONLY works with uTorrent as its heavily dependant on uTorrents Web UI API
+- Although uProcess was initially programmed on Windows 8, it should work on most platforms
 
 Usage:
 ---------

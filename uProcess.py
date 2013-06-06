@@ -118,7 +118,7 @@ def main(inputDirectory, inputHash):
     fileAction = config.get("uProcess", "fileAction")
     # Delete processed files from uTorrent
     deleteFinished = config.getboolean("uProcess", "deleteFinished")
-    # If defined (not 0) will delete a torrent if ratio above, in mils)
+    # If defined (not 0) will delete a torrent if ratio above, in mils
     deleteRatio = config.getint("uProcess", "deleteRatio")
     # Define the uTorrent host
     uTorrentHost = "http://" + config.get("uTorrent", "host") + ":" + config.get("uTorrent", "port") + "/gui/"

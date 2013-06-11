@@ -183,24 +183,15 @@ def main(inputDirectory, inputHash):
             raise
 
         if config.getboolean("Couchpotato", "active") or config.getboolean("Sickbeard", "active"):
-
             if fileAction == "move" or fileAction == "link":
                 logger.debug(loggerHeader + "Stop seeding torrent with hash: %s", inputHash)
                 uTorrent.stop(inputHash)
 
             if inputLabel == config.get("Couchpotato", "label"):
-                try:
-                    logger.info(loggerHeader + "Calling Couchpotato to process directory: %s", outputDestination)
-                    processMedia("couchpotato", outputDestination)
-                except Exception, e:
-                    logger.error(loggerHeader + "Couchpotato post process failed for directory: %s %s", outputDestination, (e, traceback.format_exc()))
+                processMedia("couchpotato", outputDestination)
 
             elif inputLabel == config.get("Sickbeard", "label"):
-                try:
-                    logger.info(loggerHeader + "Calling Sickbeard to process directory: %s", outputDestination)
-                    processMedia("sickbeard", outputDestination)
-                except Exception, e:
-                    logger.error(loggerHeader + "Sickbeard post process failed for directory: %s %s", outputDestination, (e, traceback.format_exc()))
+                processMedia("sickbeard", outputDestination)
             
             if fileAction == "move":
                 logger.debug(loggerHeader + "Removing torrent with hash: %s", inputHash)

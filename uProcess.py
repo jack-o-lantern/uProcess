@@ -111,7 +111,7 @@ def main(inputDirectory, inputHash):
     # Extensions to use when searching directory s for files to process
     mediaExt = ('.mkv', '.avi', '.divx', '.xvid', '.m4v', '.mov', '.wmv', '.mp4', '.mpg', '.mpeg', '.vob', '.iso', '.nfo', '.sub', '.srt')
     # http://www.rarlab.com/otherfmt.htm
-    archiveExt = ('.zip', 'part01.rar', '.rar', '.1', '.01', '.001', '.cab', '.arj', '.lzh', '.tar', '.tar.gz', '.gz', '.tar.bz2', '.bz2', '.ace', '.uue', '.jar', '.iso', '.7z', '.7')
+    archiveExt = ('.zip', 'part01.rar', '.rar', '.r00', '.1', '.01', '.001', '.cab', '.arj', '.lzh', '.tar', '.tar.gz', '.gz', '.tar.bz2', '.bz2', '.ace', '.uue', '.jar', '.iso', '.7z', '.7')
     # An list of words that we don't want file names/directory's to contain
     ignoreWords = ['sample', 'subs', 'proof', 'screens']
     # Move, copy or link

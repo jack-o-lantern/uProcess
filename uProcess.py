@@ -109,11 +109,10 @@ def processMedia(mediaProcessor, outputDestination):
 def main(inputDirectory, inputHash):
 
     # Extensions to use when searching directory s for files to process
-    mediaExt = ('.mkv', '.avi', '.divx', '.xvid', '.m4v', '.mov', '.wmv', '.mp4', '.mpg', '.mpeg', '.vob', '.iso', '.nfo', '.sub', '.srt')
-    # http://www.rarlab.com/otherfmt.htm
-    archiveExt = ('.zip', 'part01.rar', '.rar', '.r00', '.1', '.01', '.001', '.cab', '.arj', '.lzh', '.tar', '.tar.gz', '.gz', '.tar.bz2', '.bz2', '.ace', '.uue', '.jar', '.iso', '.7z', '.7')
+    searchExt = tuple((config.get("Miscellaneous", "media")).split(',') + (config.get("Miscellaneous", "meta")).split(',') + (config.get("Miscellaneous", "other")).split(','))
+    archiveExt = tuple((config.get("Miscellaneous", "compressed")).split(','))
     # An list of words that we don't want file names/directory's to contain
-    ignoreWords = ['sample', 'subs', 'proof', 'screens']
+    ignoreWords = (config.get("Miscellaneous", "ignore")).split(',')
     # Move, copy or link
     fileAction = config.get("uProcess", "fileAction")
     # Delete processed files from uTorrent
@@ -166,9 +165,9 @@ def main(inputDirectory, inputHash):
 
                 outputFile = os.path.join(outputDestination, fileName)
 
-                if fileName.lower().endswith(mediaExt) and not any(word in fileName.lower() for word in ignoreWords) and not any(word in inputDirectory.lower() for word in ignoreWords):
-                    logger.debug(loggerHeader + "Found media file: %s", fileName)
+                if fileName.lower().endswith(searchExt) and not any(word in fileName.lower() for word in ignoreWords) and not any(word in inputDirectory.lower() for word in ignoreWords):
                     if not os.path.isfile(outputFile):
+                        logger.debug(loggerHeader + "Found media file: %s", fileName)
                         if fileAction == "move":
                             logger.info(loggerHeader + "Moving file %s to %s", inputFile, outputFile)
                             shutil.move(inputFile, outputFile)
@@ -183,7 +182,7 @@ def main(inputDirectory, inputHash):
 
                 elif fileName.lower().endswith(archiveExt) and not any(word in fileName.lower() for word in ignoreWords) and not any(word in inputDirectory.lower() for word in ignoreWords):
                     logger.debug(loggerHeader + "Found compressed file: %s", fileName)
-                    logger.info(loggerHeader + "Extracting %s to %s", compressedFile, outputDestination)
+                    logger.info(loggerHeader + "Extracting %s to %s", inputFile, outputDestination)
                     pyUnRAR2.RarFile(inputFile).extract(path = outputDestination, withSubpath = False, overwrite = True)
         else:
             logger.error(loggerHeader + "Download hasnt completed for torrent: %s", inputName)
@@ -210,12 +209,12 @@ def main(inputDirectory, inputHash):
                 except Exception, e:
                     logger.error(loggerHeader + "Sickbeard post process failed for directory: %s %s", outputDestination, (e, traceback.format_exc()))
             
-            if fileAction == "move":
-                logger.debug(loggerHeader + "Removing torrent with hash: %s", inputHash)
-                uTorrent.removedata(inputHash)
-            elif fileAction == "link":
-                logger.debug(loggerHeader + "Start seeding torrent with hash: %s", inputHash)
-                uTorrent.start(inputHash)
+        if fileAction == "move" or deleteFinished:
+            logger.debug(loggerHeader + "Removing torrent with hash: %s", inputHash)
+            uTorrent.removedata(inputHash)
+        elif fileAction == "link":
+            logger.debug(loggerHeader + "Start seeding torrent with hash: %s", inputHash)
+            uTorrent.start(inputHash)
 
         if deleteFinished:
             logger.debug(loggerHeader + "Removing torrent with hash: %s", inputHash)

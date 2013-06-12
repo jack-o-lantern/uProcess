@@ -152,6 +152,9 @@ def main(inputDirectory, inputHash):
         if inputProgress == 1000:
             for file in files:
                 fileName, fileSize, downloadedSize = file[:3]
+
+                fileName = fileName.lower()
+
                 if os.path.isfile(inputDirectory):
                     inputFile = inputDirectory
                 else:
@@ -159,8 +162,11 @@ def main(inputDirectory, inputHash):
 
                 outputFile = os.path.join(outputDestination, fileName)
 
-                if fileName.lower().endswith(searchExt) and not any(word in fileName.lower() for word in ignoreWords) and not any(word in inputDirectory.lower() for word in ignoreWords):
-                    if not os.path.isfile(outputFile):
+                if not any(word in fileName for word in ignoreWords):
+                    if fileName.endswith(searchExt):
+                        if os.path.isfile(outputFile):
+                            logger.debug(loggerHeader + "File already exists in: %s, deleting the old file: %s", outputDestination, fileName)
+                            os.remove(outputFile)
                         logger.debug(loggerHeader + "Found media file: %s", fileName)
                         if fileAction == "move":
                             logger.info(loggerHeader + "Moving file %s to %s", inputFile, outputFile)
@@ -174,15 +180,15 @@ def main(inputDirectory, inputHash):
                         else:
                             logger.error(loggerHeader + "File action not found")
 
-                elif fileName.lower().endswith(archiveExt) and not any(word in fileName.lower() for word in ignoreWords) and not any(word in inputDirectory.lower() for word in ignoreWords):
-                    logger.debug(loggerHeader + "Found compressed file: %s", fileName)
-                    logger.info(loggerHeader + "Extracting %s to %s", inputFile, outputDestination)
-                    pyUnRAR2.RarFile(inputFile).extract(path = outputDestination, withSubpath = False, overwrite = True)
+                    elif fileName.endswith(archiveExt):
+                        logger.debug(loggerHeader + "Found compressed file: %s", fileName)
+                        logger.info(loggerHeader + "Extracting %s to %s", inputFile, outputDestination)
+                        pyUnRAR2.RarFile(inputFile).extract(path = outputDestination, withSubpath = False, overwrite = True)
         else:
             logger.error(loggerHeader + "Download hasn't completed for torrent: %s", inputName)
             raise
 
-        if config.getboolean("Couchpotato", "active") or config.getboolean("Sickbeard", "active"):
+        if (config.getboolean("Couchpotato", "active") or config.getboolean("Sickbeard", "active")) and (inputLabel == config.get("Couchpotato", "label") or inputLabel == config.get("Sickbeard", "label")):
             if fileAction == "move" or fileAction == "link":
                 logger.debug(loggerHeader + "Stop seeding torrent with hash: %s", inputHash)
                 uTorrent.stop(inputHash)
@@ -246,8 +252,8 @@ if __name__ == "__main__":
         logger.info(loggerHeader + "Config loaded: " + configFilename)
 
     # usage: uProcess.py "%D" "%I" 
-    inputDirectory = sys.argv[1]                    # %D - The directory of the torrent
-    inputHash = sys.argv[2]                         # %I - The hash of the torrent
+    inputDirectory = os.path.normpath((sys.argv[1]).lower())    # %D - The directory of the torrent, or in some cases a single file
+    inputHash = sys.argv[2]                                     # %I - The hash of the torrent
 
     if not inputDirectory:
         logger.error(loggerHeader + "Torrent directory is missing")

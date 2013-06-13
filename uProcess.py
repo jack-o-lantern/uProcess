@@ -222,7 +222,7 @@ def main(tr_dir, tr_hash):
         logger.info(loggerHeader + "Success, all done!\n")
     else:
         logger.error(loggerHeader + "No connection with uTorrent\n")
-        raise
+        sys.exit(-1)
 
 if __name__ == "__main__":
 

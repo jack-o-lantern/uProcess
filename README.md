@@ -11,7 +11,8 @@ Features:
 ---------
 - Extract downloaded content - [List of supported archives](http://www.rarlab.com/otherfmt.htm "List of supported archives")
 - Move, copy or (hard)link files that doesn't need extraction
-- Delete torrents which achieved certain ratio automatic 
+- Delete torrents which achieved certain ratio
+- Ignore torrents containing a "blacklisted" label
 - Multi OS compatible (Windows, Linux, OSX)
 - Optionally calls CouchPotato or Sick-Beard when done (for additional post-processing)
 

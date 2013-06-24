@@ -41,7 +41,7 @@ Usage:
 - Edit the config.cfg file in C:\Downloaders\uProcess to your preferences
 - Goto uTorrent again, in Options->Preferences->Advanced->Run Program, where it says "run this program when torrent finishes" add: C:\Python27\pythonw.exe C:\Downloaders\uProcess\uProcess.py "%D" "%I"
 
-NOTE: In the above example I'm assuming uProcess being extracted to C:\Downloaders\uProcess and Python 2.7 installed top its default location 
+NOTE: In the above example I'm assuming uProcess being extracted to C:\Downloaders\uProcess and Python 2.7 installed to its default location, C:\Python27
 
 Not working!?
 ---------

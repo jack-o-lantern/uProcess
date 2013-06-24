@@ -108,13 +108,28 @@ def processMedia(mediaProcessor, output_dest):
 
 def main(tr_dir, tr_hash):
 
+
     search_ext = tuple((config.get("Miscellaneous", "media") + config.get("Miscellaneous", "meta") + config.get("Miscellaneous", "other")).split('|'))
     archive_ext = tuple((config.get("Miscellaneous", "compressed")).split('|'))
+    if not (search_ext or archive_ext):
+        logger.error(loggerHeader + "Missing extensions in the config file")
+        sys.exit(-1)
+
     ignore_words = (config.get("Miscellaneous", "ignore")).split('|')
+    if not ignore_words:
+        ignore_words = ''
+
     ignore_label = (config.get("uProcess", "ignoreLabel")).split('|')
+    if not ignore_label:
+        ignore_label = ''
 
     cp_label = (config.get("Couchpotato", "label")).split('|')
+    if not cp_label:
+        cp_label = ''
+
     sb_label = (config.get("Sickbeard", "label")).split('|')
+    if not sb_label:
+        sb_label = ''
 
     file_action = config.get("uProcess", "fileAction")
     delete_finished = config.getboolean("uProcess", "deleteFinished")

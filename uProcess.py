@@ -145,16 +145,16 @@ def main(tr_dir, tr_hash):
         if tr_label:
             logger.debug(loggerHeader + "Torrent Label: %s", tr_label)
         else:
-            tr_label = 'no_label'
+            tr_label = ''
 
         output_dest = os.path.join(config.get("uProcess", "outputDirectory"), tr_label, tr_name)
-
-        if not os.path.exists(output_dest):
-            os.makedirs(output_dest)
 
         status, data = uTorrent.getfiles(tr_hash) # http://www.utorrent.com/community/developers/webapi#devs7
         hash, files = data['files']
         if not any(word in tr_label for word in ignore_label):
+            if not os.path.exists(output_dest):
+                os.makedirs(output_dest)
+
             if tr_progress == 1000:
                 for file in files:
                     fileName, fileSize, downloadedSize = file[:3]

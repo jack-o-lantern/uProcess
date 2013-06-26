@@ -60,7 +60,8 @@ def processMedia(mediaProcessor, output_dest):
     if mediaProcessor == "couchpotato":
         try:
             baseURL = config.get("Couchpotato", "baseURL")
-            logger.debug(loggerHeader + "processMedia :: URL base: %s", baseURL)
+            if not baseURL == '':
+                logger.debug(loggerHeader + "processMedia :: URL base: %s", baseURL)
         except ConfigParser.NoOptionError:
             baseURL = ''
 
@@ -74,7 +75,8 @@ def processMedia(mediaProcessor, output_dest):
     elif mediaProcessor == "sickbeard":
         try:
             baseURL = config.get("Sickbeard", "baseURL")
-            logger.debug(loggerHeader + "processMedia :: URL base: %s %s %s", (baseURL, e, traceback.format_exc()))
+            if not baseURL == '':
+                logger.debug(loggerHeader + "processMedia :: URL base: %s ", baseURL)
         except ConfigParser.NoOptionError:
             baseURL = ''
 
@@ -107,7 +109,6 @@ def processMedia(mediaProcessor, output_dest):
         time.sleep(2)
 
 def main(tr_dir, tr_hash):
-
 
     search_ext = tuple((config.get("Miscellaneous", "media") + config.get("Miscellaneous", "meta") + config.get("Miscellaneous", "other")).split('|'))
     archive_ext = tuple((config.get("Miscellaneous", "compressed")).split('|'))
@@ -142,6 +143,8 @@ def main(tr_dir, tr_hash):
         logger.error(loggerHeader + "Failed to connect to uTorrent: %s", (uTorrentHost, e, traceback.format_exc()))
 
     if uTorrent:
+        foundTorrent = False
+
         status, torrents = uTorrent.list()  # http://www.utorrent.com/community/developers/webapi#devs6
         for torrent in torrents['torrents']:
             if torrent[0] == tr_hash:     # hash
@@ -149,94 +152,111 @@ def main(tr_dir, tr_hash):
                 tr_progress = torrent[4]  # progress in mils (100% = 1000)
                 tr_ratio = torrent[7]     # ratio in mils (1.292 ratio = 1292)
                 tr_label = torrent[11]    # label
+                foundTorrent = True
+
+                logger.debug(loggerHeader + "Torrent Directory: %s", tr_dir)
+                logger.debug(loggerHeader + "Torrent Name: %s", tr_name)
+                logger.debug(loggerHeader + "Torrent Hash: %s", tr_hash)
+
+                if tr_label:
+                    logger.debug(loggerHeader + "Torrent Label: %s", tr_label)
+                else:
+                    tr_label = ''
+
+                output_dest = os.path.join(config.get("uProcess", "outputDirectory"), tr_label, tr_name)
+
+                status, data = uTorrent.getfiles(tr_hash) # http://www.utorrent.com/community/developers/webapi#devs7
+                hash, files = data['files']
+                if not any(word in tr_label for word in ignore_label):
+                    if tr_progress == 1000:
+                        for file in files:
+                            fileName, fileSize, downloadedSize = file[:3]
+                            fileName = fileName.lower()
+
+                            # Check if tr_dir has been passed as a directory or file
+                            if os.path.isfile(tr_dir):
+                                input_file = tr_dir
+                            elif os.path.isdir(tr_dir):
+                                input_file = os.path.join(tr_dir, fileName)
+                            else:
+                                logger.error(loggerHeader + "Input file/directory doesn't exist \n")
+                                sys.exit(-1)
+
+                            output_file = os.path.join(output_dest, fileName)
+
+                            if not any(word in fileName for word in ignore_words):
+                                if fileName.endswith(search_ext):
+                                    if os.path.isfile(output_file):
+                                        logger.debug(loggerHeader + "File already exists in: %s, deleting the old file: %s", output_dest, fileName)
+                                        os.remove(output_file)
+
+                                    # make sure we have a directory to work with
+                                    if not os.path.exists(output_dest):
+                                        os.makedirs(output_dest)
+
+                                    if file_action == "move":
+                                        logger.info(loggerHeader + "Moving file %s to %s", input_file, output_file)
+                                        shutil.move(input_file, output_file)
+                                    elif file_action == "link":
+                                        logger.info(loggerHeader + "Linking file %s to %s", input_file, output_file)
+                                        createLink(input_file, output_file)
+                                    elif file_action == "copy":
+                                        logger.info(loggerHeader + "Copying file %s to %s", input_file, output_file)
+                                        shutil.copy(input_file, output_file)
+                                    else:
+                                        logger.error(loggerHeader + "File action not found")
+
+                                elif fileName.endswith(archive_ext):
+                                    logger.info(loggerHeader + "Extracting %s to %s", input_file, output_dest)
+
+                                    # make sure we have a directory to work with
+                                    if not os.path.exists(output_dest):
+                                        os.makedirs(output_dest)
+
+                                    pyUnRAR2.RarFile(input_file).extract(path = output_dest, withSubpath = False, overwrite = True)
+
+                        if (config.getboolean("Couchpotato", "active") or config.getboolean("Sickbeard", "active")) and (any(word in tr_label for word in cp_label) or any(word in tr_label for word in sb_label)):
+                            if file_action == "move" or file_action == "link":
+                                logger.debug(loggerHeader + "Stop seeding torrent with hash: %s", tr_hash)
+                                uTorrent.stop(tr_hash)
+
+                            if any(word in tr_label for word in cp_label):
+                                processMedia("couchpotato", output_dest)
+
+                            elif any(word in tr_label for word in sb_label):
+                                processMedia("sickbeard", output_dest)
+                            
+                            if file_action == "move":
+                                logger.debug(loggerHeader + "Removing torrent with hash: %s", tr_hash)
+                                uTorrent.removedata(tr_hash)
+                            elif file_action == "link":
+                                logger.debug(loggerHeader + "Start seeding torrent with hash: %s", tr_hash)
+                                uTorrent.start(tr_hash)
+
+                        if delete_finished and file_action != "move":
+                            logger.debug(loggerHeader + "Removing torrent with hash: %s", tr_hash)
+                            uTorrent.removedata(tr_hash)
+
+                        logger.info(loggerHeader + "Success! Everything done \n")
+
+                    else:
+                        logger.error(loggerHeader + "Download hasn't completed for torrent: %s \n", tr_name)
+                        sys.exit(-1)
+
+                else:
+                    logger.error(loggerHeader + "uProcess is set to ignore label: %s \n", tr_label)
+                    sys.exit(-1)
+
             elif torrent[7] >= delete_ratio and delete_ratio != 0 and torrent[0] != tr_hash:
-                logger.debug(loggerHeader + "Ratio goal achieved, deleting torrent: %s", torrent[2])
+                logger.info(loggerHeader + "Ratio goal achieved, deleting torrent: %s", torrent[2])
                 uTorrent.removedata(torrent[0])
 
-
-        logger.debug(loggerHeader + "Torrent Directory: %s", tr_dir)
-        logger.debug(loggerHeader + "Torrent Name: %s", tr_name)
-        logger.debug(loggerHeader + "Torrent Hash: %s", tr_hash)
-        if tr_label:
-            logger.debug(loggerHeader + "Torrent Label: %s", tr_label)
-        else:
-            tr_label = ''
-
-        output_dest = os.path.join(config.get("uProcess", "outputDirectory"), tr_label, tr_name)
-
-        status, data = uTorrent.getfiles(tr_hash) # http://www.utorrent.com/community/developers/webapi#devs7
-        hash, files = data['files']
-        if not any(word in tr_label for word in ignore_label):
-            if not os.path.exists(output_dest):
-                os.makedirs(output_dest)
-
-            if tr_progress == 1000:
-                for file in files:
-                    fileName, fileSize, downloadedSize = file[:3]
-
-                    fileName = fileName.lower()
-
-                    if os.path.isfile(tr_dir):
-                        input_file = tr_dir
-                    else:
-                        input_file = os.path.join(tr_dir, fileName)
-
-                    output_file = os.path.join(output_dest, fileName)
-
-                    if not any(word in fileName for word in ignore_words):
-                        if fileName.endswith(search_ext):
-                            if os.path.isfile(output_file):
-                                logger.debug(loggerHeader + "File already exists in: %s, deleting the old file: %s", output_dest, fileName)
-                                os.remove(output_file)
-                            logger.debug(loggerHeader + "Found media file: %s", fileName)
-                            if file_action == "move":
-                                logger.info(loggerHeader + "Moving file %s to %s", input_file, output_file)
-                                shutil.move(input_file, output_file)
-                            elif file_action == "link":
-                                logger.info(loggerHeader + "Linking file %s to %s", input_file, output_file)
-                                createLink(input_file, output_file)
-                            elif file_action == "copy":
-                                logger.info(loggerHeader + "Copying file %s to %s", input_file, output_file)
-                                shutil.copy(input_file, output_file)
-                            else:
-                                logger.error(loggerHeader + "File action not found")
-
-                        elif fileName.endswith(archive_ext):
-                            logger.debug(loggerHeader + "Found compressed file: %s", fileName)
-                            logger.info(loggerHeader + "Extracting %s to %s", input_file, output_dest)
-                            pyUnRAR2.RarFile(input_file).extract(path = output_dest, withSubpath = False, overwrite = True)
-            else:
-                logger.error(loggerHeader + "Download hasn't completed for torrent: %s", tr_name)
-                sys.exit(-1)
-        else:
-            logger.error(loggerHeader + "uProcess is set to ignore label %s, exiting", tr_label)
+        if not foundTorrent:
+            logger.error(loggerHeader + "Couldn't find any torrent matching hash: %s \n", tr_hash)
             sys.exit(-1)
 
-        if (config.getboolean("Couchpotato", "active") or config.getboolean("Sickbeard", "active")) and (any(word in tr_label for word in cp_label) or any(word in tr_label for word in sb_label)):
-            if file_action == "move" or file_action == "link":
-                logger.debug(loggerHeader + "Stop seeding torrent with hash: %s", tr_hash)
-                uTorrent.stop(tr_hash)
-
-            if any(word in tr_label for word in cp_label):
-                processMedia("couchpotato", output_dest)
-
-            elif any(word in tr_label for word in sb_label):
-                processMedia("sickbeard", output_dest)
-            
-            if file_action == "move":
-                logger.debug(loggerHeader + "Removing torrent with hash: %s", tr_hash)
-                uTorrent.removedata(tr_hash)
-            elif file_action == "link":
-                logger.debug(loggerHeader + "Start seeding torrent with hash: %s", tr_hash)
-                uTorrent.start(tr_hash)
-
-        if delete_finished and file_action != "move":
-            logger.debug(loggerHeader + "Removing torrent with hash: %s", tr_hash)
-            uTorrent.removedata(tr_hash)
-
-        logger.info(loggerHeader + "Success, all done!\n")
     else:
-        logger.error(loggerHeader + "No connection with uTorrent\n")
+        logger.error(loggerHeader + "Couldn't connect with uTorrent \n")
         sys.exit(-1)
 
 if __name__ == "__main__":
@@ -282,6 +302,6 @@ if __name__ == "__main__":
     if not tr_dir:
         logger.error(loggerHeader + "Torrent directory is missing")
     elif not len(tr_hash) == 40:
-        logger.error(loggerHeader + "Torrent hash is missing or an invalid hash value has been passed")
+        logger.error(loggerHeader + "Torrent hash is missing, or an invalid hash value has been passed")
     else:
         main(tr_dir, tr_hash)

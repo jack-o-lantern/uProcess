@@ -178,6 +178,9 @@ def main(tr_dir, tr_hash):
                                 input_file = tr_dir
                             elif os.path.isdir(tr_dir):
                                 input_file = os.path.join(tr_dir, fileName)
+                                if not os.path.isfile(input_file):
+                                    logger.error(loggerHeader + "Input file doesn't exist \n")
+                                    sys.exit(-1)
                             else:
                                 logger.error(loggerHeader + "Input file/directory doesn't exist \n")
                                 sys.exit(-1)

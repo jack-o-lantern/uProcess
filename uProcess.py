@@ -211,7 +211,7 @@ def main(tr_dir, tr_hash):
                                         os.makedirs(output_dest)
 
                                     logger.info(loggerHeader + "Extracting %s to %s", os.path.split(input_file)[1], output_dest)
-                                    pyUnRAR2.RarFile(file).extract(input_file = output_dest, withSubpath = False, overwrite = True)
+                                    pyUnRAR2.RarFile(input_file).extract(path = output_dest, withSubpath = False, overwrite = True)
 
                         if (config.getboolean("Couchpotato", "active") or config.getboolean("Sickbeard", "active")) and (any(word in tr_label for word in cp_label) or any(word in tr_label for word in sb_label)):
                             if file_action == "move" or file_action == "link":

@@ -141,7 +141,7 @@ def main(tr_dir, tr_hash):
         logger.error(loggerHeader + "Failed to connect to uTorrent: %s", (uTorrentHost, e, traceback.format_exc()))
 
     if uTorrent:
-        foundTorrent = False
+        found_torrent = False
 
         status, torrents = uTorrent.list()  # http://www.utorrent.com/community/developers/webapi#devs6
         for torrent in torrents['torrents']:
@@ -150,13 +150,15 @@ def main(tr_dir, tr_hash):
                 tr_progress = torrent[4]  # progress in mils (100% = 1000)
                 tr_ratio = torrent[7]     # ratio in mils (1.292 ratio = 1292)
                 tr_label = torrent[11]    # label
-                foundTorrent = True
+
+                found_torrent = True
+
                 media_files = []
                 extr_files = []
 
-                logger.debug(loggerHeader + "Torrent Directory: %s", tr_dir)
-                logger.debug(loggerHeader + "Torrent Name: %s", tr_name)
-                logger.debug(loggerHeader + "Torrent Hash: %s", tr_hash)
+                logger.info(loggerHeader + "Torrent Directory: %s", tr_dir)
+                logger.info(loggerHeader + "Torrent Name: %s", tr_name)
+                logger.info(loggerHeader + "Torrent Hash: %s", tr_hash)
 
                 if tr_label:
                     logger.debug(loggerHeader + "Torrent Label: %s", tr_label)
@@ -170,48 +172,48 @@ def main(tr_dir, tr_hash):
                 if not any(word in tr_label for word in ignore_label):
                     if tr_progress == 1000:
                         for file in files:
-                            fileName, fileSize, downloadedSize = file[:3]
+                            fileName = file[0]
 
-                            fileName_check = fileName.lower()
+                            if not os.path.isfile(os.path.join(tr_dir, fileName)):
+                                logger.error(loggerHeader + "File: %s doesn't exist in: %s", fileName, tr_dir)
+                                continue
 
-                            if not any(word in fileName_check for word in ignore_words):
+                            if not any(word in fileName.lower() for word in ignore_words):
                                 if fileName.endswith(media_ext):
                                     media_files.append(fileName)
 
                                 elif fileName.endswith(archive_ext):
                                     extr_files.append(fileName)
 
-                        if extr_files or media_files:
+                        if media_files:
+                            for file in media_files:
+                                input_file = os.path.join(tr_dir, file)
+                                output_file = os.path.join(output_dest, file)
 
-                            if media_files:
-                                for file in media_files:
-                                    input_file = os.path.join(tr_dir, file)
-                                    output_file = os.path.join(output_dest, file)
+                                if not os.path.exists(os.path.split(output_file)[0]):
+                                    os.makedirs(os.path.split(output_file)[0])
 
-                                    if not os.path.exists(os.path.split(output_file)[0]):
-                                        os.makedirs(os.path.split(output_file)[0])
+                                if file_action == "move":
+                                    logger.info(loggerHeader + "Moving file: %s to: %s", os.path.split(input_file)[1], os.path.split(output_file)[0])
+                                    shutil.move(input_file, output_file)
+                                elif file_action == "link":
+                                    logger.info(loggerHeader + "Linking file: %s to: %s", os.path.split(input_file)[1], os.path.split(output_file)[0])
+                                    createLink(input_file, output_file)
+                                elif file_action == "copy":
+                                    logger.info(loggerHeader + "Copying file: %s to: %s", os.path.split(input_file)[1], os.path.split(output_file)[0])
+                                    shutil.copy(input_file, output_file)
+                                else:
+                                    logger.error(loggerHeader + "File action not found")
 
-                                    if file_action == "move":
-                                        logger.info(loggerHeader + "Moving file %s to %s", os.path.split(input_file)[1], os.path.split(output_file)[0])
-                                        shutil.move(input_file, output_file)
-                                    elif file_action == "link":
-                                        logger.info(loggerHeader + "Linking file %s to %s", os.path.split(input_file)[1], os.path.split(output_file)[0])
-                                        createLink(input_file, output_file)
-                                    elif file_action == "copy":
-                                        logger.info(loggerHeader + "Copying file %s to %s", os.path.split(input_file)[1], os.path.split(output_file)[0])
-                                        shutil.copy(input_file, output_file)
-                                    else:
-                                        logger.error(loggerHeader + "File action not found")
+                        if extr_files:
+                            for file in extr_files:
+                                input_file = os.path.join(tr_dir, file)
 
-                            if extr_files:
-                                for file in extr_files:
-                                    input_file = os.path.join(tr_dir, file)
+                                if not os.path.exists(output_dest):
+                                    os.makedirs(output_dest)
 
-                                    if not os.path.exists(output_dest):
-                                        os.makedirs(output_dest)
-
-                                    logger.info(loggerHeader + "Extracting %s to %s", os.path.split(input_file)[1], output_dest)
-                                    pyUnRAR2.RarFile(input_file).extract(path = output_dest, withSubpath = False, overwrite = True)
+                                logger.info(loggerHeader + "Extracting: %s to: %s", os.path.split(input_file)[1], output_dest)
+                                pyUnRAR2.RarFile(input_file).extract(path = output_dest, withSubpath = False, overwrite = True)
 
                         if (config.getboolean("Couchpotato", "active") or config.getboolean("Sickbeard", "active")) and (any(word in tr_label for word in cp_label) or any(word in tr_label for word in sb_label)):
                             if file_action == "move" or file_action == "link":
@@ -223,10 +225,11 @@ def main(tr_dir, tr_hash):
 
                             elif any(word in tr_label for word in sb_label):
                                 processMedia("sickbeard", output_dest)
-                            
+
                             if file_action == "move":
                                 logger.debug(loggerHeader + "Removing torrent with hash: %s", tr_hash)
                                 uTorrent.removedata(tr_hash)
+
                             elif file_action == "link":
                                 logger.debug(loggerHeader + "Start seeding torrent with hash: %s", tr_hash)
                                 uTorrent.start(tr_hash)
@@ -249,7 +252,7 @@ def main(tr_dir, tr_hash):
                 logger.info(loggerHeader + "Ratio goal achieved, deleting torrent: %s", torrent[2])
                 uTorrent.removedata(torrent[0])
 
-        if not foundTorrent:
+        if not found_torrent:
             logger.error(loggerHeader + "Couldn't find any torrent matching hash: %s \n", tr_hash)
             sys.exit(-1)
 

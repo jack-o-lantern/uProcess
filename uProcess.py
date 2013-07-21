@@ -171,7 +171,6 @@ def main(tr_dir, tr_hash):
                     if tr_progress == 1000:
                         for file in files:
                             fileName, fileSize, downloadedSize = file[:3]
-                            fileName = fileName.lower()
 
                             # Check if tr_dir has been passed as a directory or file
                             if os.path.isfile(tr_dir):
@@ -299,7 +298,7 @@ if __name__ == "__main__":
         logger.info(loggerHeader + "Config loaded: " + configFilename)
 
     # usage: uProcess.py "%D" "%I" 
-    tr_dir = os.path.normpath((sys.argv[1]).lower())    # %D - The directory of the torrent, or in some cases a single file
+    tr_dir = os.path.normpath((sys.argv[1]))    # %D - The directory of the torrent, or in some cases a single file
     tr_hash = sys.argv[2]                                     # %I - The hash of the torrent
 
     if not tr_dir:

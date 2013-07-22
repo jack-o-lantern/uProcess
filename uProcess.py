@@ -23,6 +23,7 @@ import logging
 import urllib
 import traceback
 import ConfigParser
+from base64 import b16encode, b32decode
 
 from utorrent.client import UTorrentClient
 import pyUnRAR2
@@ -299,6 +300,9 @@ if __name__ == "__main__":
     # usage: uProcess.py "%D" "%I" 
     tr_dir = os.path.normpath((sys.argv[1]))    # %D - The directory of the torrent, or in some cases a single file
     tr_hash = sys.argv[2]                                     # %I - The hash of the torrent
+
+    if len(tr_hash) == 32:
+        tr_hash = b16encode(b32decode(tr_hash))
 
     if not tr_dir:
         logger.error(loggerHeader + "Torrent directory is missing")

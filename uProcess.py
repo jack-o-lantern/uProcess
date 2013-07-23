@@ -21,6 +21,7 @@ import shutil
 import time
 import logging
 import urllib
+import httplib
 import traceback
 import ConfigParser
 from base64 import b16encode, b32decode
@@ -46,6 +47,17 @@ class AuthURLOpener(urllib.FancyURLopener):
     def openit(self, url):
         self.numTries = 0
         return urllib.FancyURLopener.open(self, url)
+        
+def pushoverMsg(app_key, usr_key, msg):
+    conn = httplib.HTTPSConnection("api.pushover.net:443")
+    conn.request("POST", "/1/messages.json",
+      urllib.urlencode({
+        "token": app_key,
+        "user": usr_key,
+        "message": msg,
+      }), { "Content-type": "application/x-www-form-urlencoded" })
+    conn.getresponse()
+    return
 
 def createLink(src, dst):
     try:
@@ -106,6 +118,8 @@ def processMedia(mediaProcessor, output_dest):
     while os.path.exists(output_dest):
         if time.time() > timeout:
             logger.debug(loggerHeader + "processMedia :: The destination directory hasn't been deleted after 2 minutes, something is wrong")
+            if config.getboolean("pushover", "active"):
+                pushoverMsg(config.get("Pushover", "appkey"), config.get("Pushover", "api_key"), "FAIL: Output directory still exist for torrent " + os.path.split(output_dest)[1])
             break
         time.sleep(2)
 
@@ -240,6 +254,8 @@ def main(tr_dir, tr_hash):
                             uTorrent.removedata(tr_hash)
 
                         logger.info(loggerHeader + "Success! Everything done \n")
+                        if config.getboolean("Pushover", "active"):
+                            pushoverMsg(config.get("Pushover", "appkey"), config.get("Pushover", "api_key"), "SUCCESS: Processed torrent: " + tr_name)
 
                     else:
                         logger.error(loggerHeader + "Download hasn't completed for torrent: %s \n", tr_name)
@@ -255,10 +271,14 @@ def main(tr_dir, tr_hash):
 
         if not found_torrent:
             logger.error(loggerHeader + "Couldn't find any torrent matching hash: %s \n", tr_hash)
+            if config.getboolean("pushover", "active"):
+                pushoverMsg(config.get("Pushover", "appkey"), config.get("Pushover", "api_key"), "FAIL: Couldn't find " + tr_name + " in uTorrent")
             sys.exit(-1)
 
     else:
         logger.error(loggerHeader + "Couldn't connect with uTorrent \n")
+        if config.getboolean("pushover", "active"):
+            pushoverMsg(config.get("Pushover", "appkey"), config.get("Pushover", "api_key"), "FAIL: Couldn't connect with uTorrent")
         sys.exit(-1)
 
 if __name__ == "__main__":

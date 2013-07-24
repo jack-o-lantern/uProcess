@@ -70,7 +70,7 @@ def createLink(src, dst):
         logger.error(loggerHeader + "Linking failed: %s %s", (e, traceback.format_exc()))
 
 def processMedia(mediaProcessor, output_dest):
-    if mediaProcessor == "couchpotato":
+    if mediaProcessor == "Couchpotato":
         try:
             baseURL = config.get("Couchpotato", "baseURL")
             if not baseURL == '':
@@ -85,7 +85,7 @@ def processMedia(mediaProcessor, output_dest):
         url = protocol + config.get("Couchpotato", "host") + ":" + config.get("Couchpotato", "port") + "/" + baseURL + "api/" + config.get("Couchpotato", "apikey") + "/renamer.scan/?async=1&movie_folder=" + output_dest
         myOpener = AuthURLOpener(config.get("Couchpotato", "username"), config.get("Couchpotato", "password"))
 
-    elif mediaProcessor == "sickbeard":
+    elif mediaProcessor == "Sickbeard":
         try:
             baseURL = config.get("Sickbeard", "baseURL")
             if not baseURL == '':
@@ -113,15 +113,26 @@ def processMedia(mediaProcessor, output_dest):
     for line in result:
         logger.debug(loggerHeader + "processMedia :: " + line)
 
-    # This is a ugly solution, we need a better one!!
-    timeout = time.time() + 60*2 # 2 min time out
+    timeout = time.time() + 60*2 # 2 min
     while os.path.exists(output_dest):
+        if os.path.isdir(output_dest) and not os.listdir(output_dest):
+            os.rmdir(output_dest)
+
+        elif os.listdir(output_dest):
+            max_size = 1048576 * 200 # 200 mb
+            for file in os.listdir(output_dest):
+                file_path = os.path.join(output_dest, file)
+                if os.path.getsize(file_path) <= max_size:
+                    os.remove(file_path)
+
         if time.time() > timeout:
-            logger.debug(loggerHeader + "processMedia :: The destination directory hasn't been deleted after 2 minutes, something is wrong")
             if config.getboolean("pushover", "active"):
                 pushoverMsg(config.get("Pushover", "appkey"), config.get("Pushover", "api_key"), "FAIL: Output directory still exist for torrent " + os.path.split(output_dest)[1])
+
+            logger.error(loggerHeader + "processMedia :: The output directory hasn't been deleted/processed after 2 minutes, check the logs at %s", mediaProcessor)
             break
-        time.sleep(2)
+
+        time.sleep(10)
 
 def main(tr_dir, tr_hash):
 
@@ -236,10 +247,10 @@ def main(tr_dir, tr_hash):
                                 uTorrent.stop(tr_hash)
 
                             if any(word in tr_label for word in cp_label):
-                                processMedia("couchpotato", output_dest)
+                                processMedia("Couchpotato", output_dest)
 
                             elif any(word in tr_label for word in sb_label):
-                                processMedia("sickbeard", output_dest)
+                                processMedia("Sickbeard", output_dest)
 
                             if file_action == "move":
                                 logger.debug(loggerHeader + "Removing torrent with hash: %s", tr_hash)

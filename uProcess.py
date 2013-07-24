@@ -126,7 +126,7 @@ def processMedia(mediaProcessor, output_dest):
                     os.remove(file_path)
 
         if time.time() > timeout:
-            if config.getboolean("pushover", "active"):
+            if config.getboolean("Pushover", "active"):
                 pushoverMsg(config.get("Pushover", "appkey"), config.get("Pushover", "api_key"), "FAIL: Output directory still exist for torrent " + os.path.split(output_dest)[1])
 
             logger.error(loggerHeader + "processMedia :: The output directory hasn't been deleted/processed after 2 minutes, check the logs at %s", mediaProcessor)
@@ -282,13 +282,13 @@ def main(tr_dir, tr_hash):
 
         if not found_torrent:
             logger.error(loggerHeader + "Couldn't find any torrent matching hash: %s \n", tr_hash)
-            if config.getboolean("pushover", "active"):
+            if config.getboolean("Pushover", "active"):
                 pushoverMsg(config.get("Pushover", "appkey"), config.get("Pushover", "api_key"), "FAIL: Couldn't find " + tr_name + " in uTorrent")
             sys.exit(-1)
 
     else:
         logger.error(loggerHeader + "Couldn't connect with uTorrent \n")
-        if config.getboolean("pushover", "active"):
+        if config.getboolean("Pushover", "active"):
             pushoverMsg(config.get("Pushover", "appkey"), config.get("Pushover", "api_key"), "FAIL: Couldn't connect with uTorrent")
         sys.exit(-1)
 

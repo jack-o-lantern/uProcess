@@ -186,8 +186,8 @@ def findFiles(ut_handle, hash, ignore_words):
 
     for file in files:
         file_name = file[0]
-        if not os.path.isfile(os.path.join(os.path.split(tr_dir)[0], file_name)):
-            logger.error(loggerHeader + "File: %s doesn't exist in: %s", file_name, os.path.split(tr_dir)[0])
+        if not os.path.isfile(os.path.join(tr_dir, file_name)):
+            logger.error(loggerHeader + "File: %s doesn't exist in: %s", file_name, tr_dir)
             continue
 
         if not any(word in file_name.lower() for word in ignore_words):

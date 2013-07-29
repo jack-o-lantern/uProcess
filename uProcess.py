@@ -274,23 +274,22 @@ def main(tr_dir, tr_hash):
                     ut_handle.stop(tr_hash)
 
                 media_files, extr_files = findFiles(ut_handle, tr_hash, ignore_words)
-                if media_files:
+                if media_files or extr_files:
                     for file in media_files:
                         input_file = os.path.join(tr_dir, file)
                         output_file = os.path.join(output_dest, file)
                         processFile(input_file, output_file, file_action)
 
-                if extr_files:
                     for file in extr_files:
                         input_file = os.path.join(tr_dir, file)
                         extractFile(input_file, output_dest)
 
-                if (cp_active or sb_active) and (any(word in tr_label for word in (cp_label or sb_label))):
-                    if any(word in tr_label for word in cp_label):
-                        processMedia("Couchpotato", output_dest)
+                    if cp_active or sb_active:
+                        if any(word in tr_label for word in cp_label):
+                            processMedia("Couchpotato", output_dest)
 
-                    elif any(word in tr_label for word in sb_label):
-                        processMedia("Sickbeard", output_dest)
+                        elif any(word in tr_label for word in sb_label):
+                            processMedia("Sickbeard", output_dest)
 
                 if file_action == "move":
                     logger.debug(loggerHeader + "Removing torrent with hash: %s", tr_hash)

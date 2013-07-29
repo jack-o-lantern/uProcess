@@ -149,7 +149,7 @@ def processMedia(mediaProcessor, output_dest):
 
         time.sleep(10)
 
-def findTorrent(ut_handle, tr_hash, delete_ratio):
+def findTorrent(ut_handle, tr_hash):
     status, torrents = ut_handle.list()  # http://www.utorrent.com/community/developers/webapi#devs6
 
     for torrent in torrents['torrents']:
@@ -254,7 +254,7 @@ def main(tr_dir, tr_hash):
         logger.error(loggerHeader + "Failed to connect to uTorrent: %s", (ut_host, e, traceback.format_exc()))
 
     if ut_handle:
-        tr_hash, tr_name, tr_progress, tr_ratio, tr_label = findTorrent(ut_handle, tr_hash, delete_ratio)
+        tr_hash, tr_name, tr_progress, tr_ratio, tr_label = findTorrent(ut_handle, tr_hash)
         if tr_progress == 1000:
             if not any(word in tr_label for word in ignore_label):
 
@@ -268,12 +268,11 @@ def main(tr_dir, tr_hash):
                     tr_label = ''
 
                 output_dest = os.path.join(output_dir, tr_label, tr_name)
-                media_files, extr_files = findFiles(ut_handle, hash, ignore_words)
-                deleted_torrents = deleteTorrent(ut_handle, tr_hash, delete_ratio)
 
+                media_files, extr_files = findFiles(ut_handle, tr_hash, ignore_words)
                 if media_files:
                     for file in media_files:
-                        input_file = os.path.join(os.path.split(tr_dir)[0], file)
+                        input_file = os.path.join(tr_dir, file)
                         output_file = os.path.join(output_dest, file)
 
                         processFile(input_file, output_file, file_action)
@@ -303,6 +302,7 @@ def main(tr_dir, tr_hash):
                         logger.debug(loggerHeader + "Start seeding torrent with hash: %s", tr_hash)
                         ut_handle.start(tr_hash)
 
+                deleted_torrents = deleteTorrent(ut_handle, tr_hash, delete_ratio)
                 if deleted_torrents:
                     for torrent in deleted_torrents:
                         logger.info(loggerHeader + "Ratio goal achieved, deleting torrent: %s", torrent)
@@ -325,7 +325,7 @@ def main(tr_dir, tr_hash):
             sys.exit(-1)
 
     else:
-        logger.error(loggerHeader + "Couldn't connect with uTorrent \n")
+        logger.error(loggerHeader + "Couldn't connect to uTorrent \n")
 
 if __name__ == "__main__":
 

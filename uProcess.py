@@ -269,38 +269,36 @@ def main(tr_dir, tr_hash):
 
                 output_dest = os.path.join(output_dir, tr_label, tr_name)
 
+                if file_action == "move" or file_action == "link": # don't need to stop the torrent if we're copying
+                    logger.debug(loggerHeader + "Stop seeding torrent with hash: %s", tr_hash)
+                    ut_handle.stop(tr_hash)
+
                 media_files, extr_files = findFiles(ut_handle, tr_hash, ignore_words)
                 if media_files:
                     for file in media_files:
                         input_file = os.path.join(tr_dir, file)
                         output_file = os.path.join(output_dest, file)
-
                         processFile(input_file, output_file, file_action)
 
                 if extr_files:
                     for file in extr_files:
                         input_file = os.path.join(tr_dir, file)
-
                         extractFile(input_file, output_dest)
 
                 if (cp_active or sb_active) and (any(word in tr_label for word in (cp_label or sb_label))):
-                    if file_action == "move" or file_action == "link":
-                        logger.debug(loggerHeader + "Stop seeding torrent with hash: %s", tr_hash)
-                        ut_handle.stop(tr_hash)
-
                     if any(word in tr_label for word in cp_label):
                         processMedia("Couchpotato", output_dest)
 
                     elif any(word in tr_label for word in sb_label):
                         processMedia("Sickbeard", output_dest)
 
-                    if file_action == "move":
-                        logger.debug(loggerHeader + "Removing torrent with hash: %s", tr_hash)
-                        ut_handle.removedata(tr_hash)
+                if file_action == "move":
+                    logger.debug(loggerHeader + "Removing torrent with hash: %s", tr_hash)
+                    ut_handle.removedata(tr_hash)
 
-                    elif file_action == "link":
-                        logger.debug(loggerHeader + "Start seeding torrent with hash: %s", tr_hash)
-                        ut_handle.start(tr_hash)
+                elif file_action == "link":
+                    logger.debug(loggerHeader + "Start seeding torrent with hash: %s", tr_hash)
+                    ut_handle.forcestart(tr_hash)
 
                 deleted_torrents = deleteTorrent(ut_handle, tr_hash, delete_ratio)
                 if deleted_torrents:

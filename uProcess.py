@@ -72,30 +72,32 @@ def createLink(src, dst):
     except Exception, e:
         logger.error(loggerHeader + "Linking failed: %s %s", (e, traceback.format_exc()))
 
-def removeData(path):
-    if os.path.isdir(path) and not os.listdir(path):
-        try:
-            os.rmdir(path)
-        except OSError, e:
-            if e.errno == errno.ENOENT:
-                logger.error(loggerHeader + "Directory doesn't exist: %s", (path, e, traceback.format_exc()))
-            elif e.errno == errno.EACCES:
-                logger.error(loggerHeader + "No access to directory: %s", (path, e, traceback.format_exc()))
-            else:
-                raise
-
-    elif os.listdir(path):
-        max_size = 1048576 * 200 # 200 mb
-        for file in os.listdir(path):
-            file_path = os.path.join(path, file)
-            if os.path.getsize(file_path) <= max_size:
+def cleanup(path):
+    for root, dirs, files in os.walk(path, topdown=False):
+        for name in files:
+            file_path = os.path.join(root, name)
+            max_file_size = 1048576 * 200 # 200 mb
+            if os.path.getsize(file_path) <= max_file_size:
                 try:
                     os.remove(file_path)
                 except OSError, e:
                     if e.errno == errno.ENOENT:
-                        logger.error(loggerHeader + "File doesn't exist: %s", (file, e, traceback.format_exc()))
+                        logger.error(loggerHeader + "File doesn't exist: %s", (file_path, e, traceback.format_exc()))
                     elif e.errno == errno.EACCES:
-                        logger.error(loggerHeader + "No access to file: %s", (file, e, traceback.format_exc()))
+                        logger.error(loggerHeader + "No write permission to file: %s", (file_path, e, traceback.format_exc()))
+                    else:
+                        raise
+
+        for name in dirs:
+            dir_path = os.path.join(root, name)
+            if not os.listdir(dir_path):
+                try:
+                    os.rmdir(dir_path)
+                except OSError, e:
+                    if e.errno == errno.ENOENT:
+                        logger.error(loggerHeader + "Directory doesn't exist: %s", (dir_path, e, traceback.format_exc()))
+                    elif e.errno == errno.EACCES:
+                        logger.error(loggerHeader + "No write permission to directory: %s", (dir_path, e, traceback.format_exc()))
                     else:
                         raise
 
@@ -162,10 +164,9 @@ def processMedia(mediaProcessor, output_dest):
             logger.error(loggerHeader + "processMedia :: The output directory hasn't been deleted/processed after 2 minutes, check the logs at %s", mediaProcessor)
             if pushover_active:
                 pushoverMsg("Output directory still exist for torrent " + os.path.split(output_dest)[1])
-
             break
 
-        removeData(output_dest)
+        cleanup(output_dest)
 
         time.sleep(10)
 

@@ -72,6 +72,33 @@ def createLink(src, dst):
     except Exception, e:
         logger.error(loggerHeader + "Linking failed: %s %s", (e, traceback.format_exc()))
 
+def removeData(path):
+    if os.path.isdir(path) and not os.listdir(path):
+        try:
+            os.rmdir(path)
+        except OSError, e:
+            if e.errno == errno.ENOENT:
+                logger.error(loggerHeader + "Directory doesn't exist: %s", (path, e, traceback.format_exc()))
+            elif e.errno == errno.EACCES:
+                logger.error(loggerHeader + "No access to directory: %s", (path, e, traceback.format_exc()))
+            else:
+                raise
+
+    elif os.listdir(path):
+        max_size = 1048576 * 200 # 200 mb
+        for file in os.listdir(path):
+            file_path = os.path.join(path, file)
+            if os.path.getsize(file_path) <= max_size:
+                try:
+                    os.remove(file_path)
+                except OSError, e:
+                    if e.errno == errno.ENOENT:
+                        logger.error(loggerHeader + "File doesn't exist: %s", (file, e, traceback.format_exc()))
+                    elif e.errno == errno.EACCES:
+                        logger.error(loggerHeader + "No access to file: %s", (file, e, traceback.format_exc()))
+                    else:
+                        raise
+
 def processMedia(mediaProcessor, output_dest):
 
     # couchpotato
@@ -138,23 +165,7 @@ def processMedia(mediaProcessor, output_dest):
 
             break
 
-        if os.path.isdir(output_dest) and not os.listdir(output_dest):
-            os.rmdir(output_dest)
-
-        elif os.listdir(output_dest):
-            max_size = 1048576 * 200 # 200 mb
-            for file in os.listdir(output_dest):
-                file_path = os.path.join(output_dest, file)
-                if os.path.getsize(file_path) <= max_size:
-                    try:
-                        os.remove(file_path)
-                    except OSError, e:
-                        if e.errno == errno.ENOENT:
-                            logger.error(loggerHeader + "File doesn't exist: %s", (file, e, traceback.format_exc()))
-                        elif e.errno == errno.EACCES:
-                            logger.error(loggerHeader + "No access to file: %s", (file, e, traceback.format_exc()))
-                        else:
-                            raise
+        removeData(output_dest)
 
         time.sleep(10)
 

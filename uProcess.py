@@ -146,7 +146,15 @@ def processMedia(mediaProcessor, output_dest):
             for file in os.listdir(output_dest):
                 file_path = os.path.join(output_dest, file)
                 if os.path.getsize(file_path) <= max_size:
-                    os.remove(file_path)
+                    try:
+                        os.remove(file_path)
+                    except OSError, e:
+                        if e.errno == errno.ENOENT:
+                            logger.error(loggerHeader + "File doesn't exist: %s", (file, e, traceback.format_exc()))
+                        elif e.errno == errno.EACCES:
+                            logger.error(loggerHeader + "No access to file: %s", (file, e, traceback.format_exc()))
+                        else:
+                            raise
 
         time.sleep(10)
 
